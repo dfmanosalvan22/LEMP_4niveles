@@ -551,12 +551,4 @@ Link vídeo: https://youtu.be/Mkb2RlpXzME
 
 ## Conclusión
 
-En esta actividad se diseñó e implementó una arquitectura distribuida tipo **LAMP** utilizando **Vagrant**, con el objetivo de comprender el funcionamiento y la integración de distintos servicios en un entorno realista. La solución se estructuró en varias capas claramente diferenciadas, lo que permitió aplicar principios básicos de **escalabilidad, alta disponibilidad y separación de responsabilidades**.
-
-Se configuró un **cluster de bases de datos MariaDB Galera**, garantizando replicación síncrona y tolerancia a fallos entre nodos. Sobre este cluster se desplegó **HAProxy** como balanceador de carga en modo TCP, proporcionando un punto único de acceso a la base de datos y permitiendo distribuir las conexiones de forma transparente para los servidores web.
-
-Por otro lado, se implementó un **servidor NFS** que centraliza el código de la aplicación y actúa además como **servidor PHP-FPM remoto**, lo que facilitó la compartición del contenido entre múltiples servidores web y evitó duplicidad de datos. Los **servidores web Nginx** montan dicho recurso NFS y delegan la ejecución de scripts PHP al servicio PHP-FPM, manteniendo así una arquitectura desacoplada y modular.
-
-Durante el desarrollo de la actividad se identificaron y resolvieron problemas habituales en entornos distribuidos, especialmente relacionados con **rutas de archivos, configuración de FastCGI, permisos NFS y conectividad entre servicios**. Esto permitió afianzar conceptos clave como la coherencia de rutas entre sistemas, la importancia del orden de arranque en Vagrant y la correcta comunicación entre capas.
-
-En conjunto, la práctica demuestra cómo es posible construir un entorno web completo y funcional basado en software libre, simulando escenarios de producción y reforzando el entendimiento de tecnologías ampliamente utilizadas en infraestructuras modernas.
+En esta actividad se diseñó e implementó una arquitectura distribuida utilizando Vagrant, organizada en varias capas para garantizar escalabilidad, alta disponibilidad y separación de responsabilidades. Se configuró un cluster de bases de datos MariaDB Galera con replicación síncrona, sobre el cual HAProxy distribuye las conexiones de forma transparente. Un servidor NFS centraliza el código y ejecuta PHP-FPM de manera remota, mientras que los servidores web Nginx montan este recurso y sirven el contenido de forma modular. Durante la práctica se resolvieron problemas de rutas, permisos, FastCGI y conectividad, reforzando conceptos de coherencia entre capas y comunicación entre servicios. La actividad demuestra cómo construir un entorno web completo y funcional, simulando escenarios de producción.
