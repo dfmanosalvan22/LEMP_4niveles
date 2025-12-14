@@ -12,7 +12,6 @@
    - [Capa 1: Balanceador de Carga](#capa-1-balanceador-de-carga)
 5. [Verificación del Funcionamiento](#verificación-del-funcionamiento)
 6. [Conclusión](#conclusión)
-7. [Aplicación Web Desplegada](#aplicación-web-desplegada)
 
 ---
 
