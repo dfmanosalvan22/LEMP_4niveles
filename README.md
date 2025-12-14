@@ -545,6 +545,11 @@ systemctl enable nginx
 echo "Balanceador configurado"
 ```
 
+## Verificación del Funcionamiento
+
+
+
+
 ## Conclusión
 
 En esta actividad se diseñó e implementó una arquitectura distribuida tipo **LAMP** utilizando **Vagrant**, con el objetivo de comprender el funcionamiento y la integración de distintos servicios en un entorno realista. La solución se estructuró en varias capas claramente diferenciadas, lo que permitió aplicar principios básicos de **escalabilidad, alta disponibilidad y separación de responsabilidades**.
