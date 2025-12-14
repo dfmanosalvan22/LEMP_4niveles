@@ -17,8 +17,9 @@
 
 ## Introducción
 
-Este proyecto implementa una **infraestructura web en alta disponibilidad** basada en la pila **LEMP** (Linux, Nginx, MariaDB, PHP), organizada en **4 capas independientes**.  
-El diseño busca aislar responsabilidades, mejorar la seguridad y garantizar tolerancia a fallos mediante balanceo de carga y replicación de datos.
+Este proyecto implementa una infraestructura web en alta disponibilidad, organizada en 4 capas independientes. El diseño separa responsabilidades entre servidores web, almacenamiento, proxy de base de datos y cluster de bases de datos, mejorando la seguridad, la escalabilidad y la tolerancia a fallos.  
+
+Se utilizan balanceo de carga en la capa web y replicación síncrona en la base de datos para garantizar que la aplicación siga disponible incluso ante fallos de nodos individuales. El proyecto permite comprender cómo distintos servicios interactúan en un entorno distribuido y simula escenarios de producción realistas con software libre.
 
 ### Objetivos del proyecto
 - Desplegar una aplicación web de gestión de usuarios
