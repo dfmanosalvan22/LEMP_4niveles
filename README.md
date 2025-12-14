@@ -547,7 +547,7 @@ echo "Balanceador configurado"
 
 ## Verificación del Funcionamiento
 
-
+Link vídeo: https://youtu.be/Mkb2RlpXzME
 
 
 ## Conclusión
