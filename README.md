@@ -10,8 +10,8 @@
    - [Capa 2: Servidor NFS y PHP-FPM](#capa-2-servidor-nfs-y-php-fpm)
    - [Capa 2: Servidores Web Nginx](#capa-2-servidores-web-nginx)
    - [Capa 1: Balanceador de Carga](#capa-1-balanceador-de-carga)
-5. [Despliegue de la Infraestructura](#despliegue-de-la-infraestructura)
-6. [Verificación del Funcionamiento](#verificación-del-funcionamiento)
+5. [Verificación del Funcionamiento](#verificación-del-funcionamiento)
+6. [Conclusión](#conclusión)
 7. [Aplicación Web Desplegada](#aplicación-web-desplegada)
 
 ---
@@ -124,7 +124,7 @@ Solo el servidor NFS se conecta al HAProxy de base de datos.
 ---
 ## Descripción de las capas
 
-### Capa 1: Balanceador de Carga
+### Capa 1: Balanceador
 
 Esta capa está compuesta por una única máquina denominada **balanceadorfelipe**, cuya función es distribuir el tráfico HTTP entrante entre los servidores web disponibles. El servicio se encuentra expuesto al host a través del **puerto 8080**, actuando como punto de entrada principal a la arquitectura y garantizando una distribución eficiente de las solicitudes.
 
@@ -286,9 +286,15 @@ echo "MariaDB Galera Cluster configurado"
 
 ### Capa 3: Proxy HAProxy 
 
-HAProxy actúa como balanceador de carga para las conexiones MySQL, distribuyendo las peticiones entre los 3 nodos del cluster.
-
+HAProxy actúa como **balanceador de carga para las conexiones MySQL**, distribuyendo las peticiones entre los 3 nodos del cluster Galera. Garantiza alta disponibilidad y tolerancia a fallos, permitiendo que los servidores web se conecten a un único punto de acceso a la base de datos.
 #### Script `scripts/haproxy.sh`
+
+El script realiza las siguientes acciones:
+
+- Instala HAProxy.
+- Configura el balanceo TCP en el puerto 3306.
+- Define los tres servidores MariaDB como backend.
+- Habilita y arranca el servicio.
 
 ```bash
 #!/bin/bash
@@ -336,9 +342,18 @@ echo "HAProxy configurado"
 ```
 ### Capa 2: Servidor NFS y PHP-FPM
 
-texto nfs 
-
+El servidor NFS centraliza **el código PHP y los recursos web**, y además ejecuta **PHP-FPM remoto**, permitiendo que los servidores web únicamente sirvan contenido estático y deleguen la ejecución de PHP.
 #### Script `scripts/nfs.sh`
+
+El script realiza:
+
+- Instalación de NFS y PHP-FPM.
+- Creación del directorio `/var/nfs/share` y configuración de permisos.
+- Configuración de `/etc/exports` para permitir acceso desde los servidores web.
+- Configuración de PHP-FPM para escuchar por TCP (`192.168.20.10:9000`).
+- Descarga de la aplicación de ejemplo y copia al NFS.
+- Creación del archivo `config.php` con la conexión a la base de datos.
+- Habilitación de servicios y ajustes de red para Vagrant.
 
 ```bash
 #!/bin/bash
@@ -416,9 +431,15 @@ echo "NFS y PHP-FPM configurados"
 
 ### Capa 2: Servidores Web Nginx
 
-texto web
-
+Los servidores web montan **el recurso compartido NFS** en `/var/www/html` y usan **Nginx** para servir contenido web y **reenviar las peticiones PHP a PHP-FPM remoto**.
 #### Script `scripts/serverweb.sh`
+
+El script realiza:
+
+- Instalación de Nginx y cliente NFS.
+- Montaje del directorio NFS en `/var/www/html`.
+- Configuración de Nginx para servir PHP vía FastCGI a PHP-FPM en el servidor NFS.
+- Habilitación de Nginx y ajustes de red en Vagrant.
 
 ```bash
 #!/bin/bash
@@ -481,61 +502,47 @@ echo "Servidor web configurado"
 
 ### Capa 1: Balanceador de Carga
 
-texto balanceador
-
+Su función es distribuir el tráfico HTTP entre los servidores web. Este balanceador permite:
 #### Script `scripts/balanceador.sh`
+
+- Escalabilidad horizontal de los servidores web.
+- Alta disponibilidad frente a fallos de un nodo.
+- Acceso unificado para el usuario final.
 
 ```bash
 #!/bin/bash
 
-echo "INSTALANDO HAPROXY"
-
+echo "INSTALANDO BALANCEADOR NGINX"
 sudo apt update
-sudo apt install -y haproxy
+sudo apt install -y nginx
 
-# HAProxy trabaja en modo TCP porque MySQL no es HTTP Se balancean conexiones hacia los nodos Galera
-cat > /etc/haproxy/haproxy.cfg << 'EOF'
-global
-    log /dev/log local0
-    chroot /var/lib/haproxy
-    user haproxy
-    group haproxy
-    daemon
+cat > /etc/nginx/sites-available/balancer << 'EOF'
+upstream backend {
+    server 192.168.10.20:80;  # Servidor web 1
+    server 192.168.10.30:80;  # Servidor web 2
+}
 
-defaults
-    log global
-    mode tcp
-
-    # Timeouts para conexiones MySQL
-    timeout connect 5000
-    timeout client 50000
-    timeout server 50000
-
-# Punto único de acceso a la base de datos los servers web se conectan aquí
-listen mysql
-    bind 192.168.30.10:3306
-    mode tcp
-
-    # Balanceo simple entre nodos Galera
-    balance roundrobin
-    option mysql-check user haproxy_check
-
-    # Nodos del cluster Galera
-    server mariadb1 192.168.40.20:3306 check
-    server mariadb2 192.168.40.21:3306 check
-    server mariadb3 192.168.40.22:3306 check
+server {
+    listen 80;
+    
+    location / {
+        proxy_pass http://backend;  # Envía tráfico a los servidores web
+        proxy_set_header Host $host;  # Mantiene el host original
+        proxy_set_header X-Real-IP $remote_addr;  # Pasa la IP del cliente
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;  # Encabezado para tracking
+    }
+}
 EOF
 
+# Activamos la configuración y eliminamos la default
+ln -sf /etc/nginx/sites-available/balancer /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
 
-# Aplica configuración y habilita HAProxy al inicio
-systemctl restart haproxy
-systemctl enable haproxy
+# Reinicia Nginx para aplicar cambios y habilita al inicio
+systemctl restart nginx
+systemctl enable nginx
 
-
-# Eliminación de la ruta por defecto para evitar conflictos
-ip route del default
-
-echo "HAProxy configurado"
+echo "Balanceador configurado"
 ```
 
 ## Conclusión
